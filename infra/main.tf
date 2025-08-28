@@ -39,3 +39,34 @@ resource "aws_sagemaker_notebook_instance" "main" {
     aws_iam_role_policy_attachment.sagemaker_notebook_policy_attach
   ]
 }
+
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+resource "aws_sagemaker_domain" "main" {
+  domain_name = "${var.sagemaker_instance_name}-oudam-domain"
+  auth_mode   = "IAM"
+  vpc_id = data.aws_vpc.default.id
+  subnet_ids = data.aws_subnets.default.ids
+
+  default_user_settings {
+    execution_role = aws_iam_role.sagemaker_notebook_role.arn
+  }
+
+  tags = {
+    Project = "Bedrock-Course-Study"
+    Owner   = "outdam"
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.sagemaker_notebook_policy_attach
+  ]
+}
